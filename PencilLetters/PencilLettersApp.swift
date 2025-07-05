@@ -12,6 +12,7 @@ struct PencilLettersApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(.light) // Better for handwriting visibility
         }
     }
 }
