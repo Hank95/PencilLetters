@@ -8,11 +8,20 @@ struct ImageRenderer {
     
     /// Render the PKDrawing to a UIImage at the specified size
     func render() -> UIImage? {
-        // Use the canvas size (600x600) as the source size
-        let canvasSize = CGSize(width: 600, height: 600)
+        // Get the actual bounds of the drawing content
+        let bounds = drawing.bounds
         
-        // Create an image from the entire canvas area
-        let image = drawing.image(from: CGRect(origin: .zero, size: canvasSize), scale: 1.0)
+        // If drawing is empty, return nil
+        if bounds.isEmpty {
+            return nil
+        }
+        
+        // Add padding around the drawing
+        let padding: CGFloat = 20
+        let paddedBounds = bounds.insetBy(dx: -padding, dy: -padding)
+        
+        // Create an image from just the drawn content area (not the entire canvas)
+        let image = drawing.image(from: paddedBounds, scale: 3.0)
         
         // Create a new context at the target size (224x224)
         UIGraphicsBeginImageContextWithOptions(size, true, 1.0)
@@ -22,8 +31,19 @@ struct ImageRenderer {
         UIColor.white.setFill()
         UIRectFill(CGRect(origin: .zero, size: size))
         
-        // Draw the image scaled down to fit the target size
-        image.draw(in: CGRect(origin: .zero, size: size))
+        // Calculate aspect fit rectangle to maintain aspect ratio
+        let imageSize = image.size
+        let widthRatio = size.width / imageSize.width
+        let heightRatio = size.height / imageSize.height
+        let scale = min(widthRatio, heightRatio) * 0.9 // 90% to leave some margin
+        
+        let scaledWidth = imageSize.width * scale
+        let scaledHeight = imageSize.height * scale
+        let x = (size.width - scaledWidth) / 2
+        let y = (size.height - scaledHeight) / 2
+        
+        // Draw the image centered and scaled to fit
+        image.draw(in: CGRect(x: x, y: y, width: scaledWidth, height: scaledHeight))
         
         // Get the rendered image
         return UIGraphicsGetImageFromCurrentImageContext()
